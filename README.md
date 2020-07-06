@@ -1,6 +1,6 @@
 ### 2020/07 BuRnCycL
 
-Setting up Cert-manager + Letsencrypt
+Setting up Cert-manager + Letsencrypt with a dummy echo web application.
 
 
 References:
