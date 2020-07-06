@@ -31,9 +31,8 @@ fyzix-nginx-ingress   LoadBalancer   10.110.29.219    10.9.9.50     80:31963/TCP
 
 Test plain port 80 echoer
 ```
-cd ./plain
-kc apply -f echo1.yml
-kc apply -f echo2.yml
+kc apply -f app-echo1.yml
+kc apply -f app-echo2.yml
 kc apply -f echo_ingress_plain80.yml
 ```
 
