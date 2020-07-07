@@ -1,6 +1,6 @@
 #!/bin/bash
 
-kubectl create secret tls ca-key-pair \
+kubectl create secret tls tls-secret \
    --cert=ca.crt \
    --key=ca.key \
    --namespace=default

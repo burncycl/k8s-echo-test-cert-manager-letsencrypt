@@ -17,7 +17,7 @@ metadata:
   name: selfsigned-cert
   namespace: cert-manager-test
 spec:
-  commonName: example.com
+  commonName: fyzix.net 
   secretName: selfsigned-cert-tls
   issuerRef:
     name: test-selfsigned

@@ -5,6 +5,7 @@ Setting up Cert-manager + Letsencrypt with a dummy echo web application.
 
 References:
 - https://dev.to/chrisme/setting-up-nginx-ingress-w-automatically-generated-letsencrypt-certificates-on-kubernetes-4f1k
+- https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nginx-ingress-with-cert-manager-on-digitalocean-kubernetes
 - https://medium.com/@balkaran.brar/configure-letsencrypt-and-cert-manager-with-kubernetes-3156981960d9
 
 
@@ -15,9 +16,22 @@ helm repo add jetstack https://charts.jetstack.io
 helm repo update
 ```
 ### Helm Install Nginx Ingress & Cert-manager 
+Reference: 
+* https://hub.helm.sh/charts/jetstack/cert-manager
+* https://github.com/jetstack/cert-manager/issues/2540
+
+List versions
+```
+helm search repo -l nginx-stable/nginx-ingress 
+helm search repo -l jetstack/cert-manager
+```
+
 ```
 helm install fyzix nginx-stable/nginx-ingress 
-helm install fyzix --namespace cert-manager jetstack/cert-manager
+kc apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.2/cert-manager.crds.yaml
+kc create ns cert-manager
+helm install cert-manager --namespace cert-manager jetstack/cert-manager # This failed on fresh install
+helm template cert-manager jetstack/cert-manager --namespace cert-manager | kubectl apply -f -
 ```
 
 ### Echo Deployment
@@ -75,7 +89,6 @@ kc get clusterissuer -n cert-manager
 Output
 ```
 NAME                  READY   AGE
-ca-issuer             False   55d
 letsencrypt-prod      True    61s
 letsencrypt-staging   True    64s
 
@@ -91,7 +104,7 @@ Note the annotations which associate with the cluster cert issuer.
 
 Verify
 ```
-kubectl describe certificate letsencrypt-staging
+kubectl describe certificate le-staging
 ```
 
 ##### Prod
@@ -101,7 +114,12 @@ kc apply -f prod-echo_ingress.yml
 
 Verify
 ```
-kubectl describe certificate letsencrypt-prod
+kubectl describe certificate le-prod
 ```
 
 Should see Generated new private key and Created new CertificateRequest resource `letsencrypt-env-XXXX`
+
+
+### Issues
+Reference:
+* https://github.com/jetstack/cert-manager/issues/2712

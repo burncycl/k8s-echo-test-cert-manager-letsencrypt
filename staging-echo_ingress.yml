@@ -1,16 +1,16 @@
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: echo-ingress
   annotations:
-    kubernetes.io/ingress.class: "nginx"    
+    kubernetes.io/ingress.class: "nginx"
     cert-manager.io/cluster-issuer: "letsencrypt-staging"
 spec:
   tls:
   - hosts:
     - echo1.fyzix.net
     - echo2.fyzix.net
-    secretName: letsencrypt-staging
+    secretName: echo-tls
   rules:
   - host: echo1.fyzix.net
     http:
