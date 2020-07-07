@@ -32,12 +32,12 @@ List versions
 helm search repo -l nginx-stable/nginx-ingress 
 helm search repo -l jetstack/cert-manager
 ```
-Can use `--version` argument to specify a specific version of the above software.
+Can use `--version` argument below to specify a specific version of the above software (if needed).
 
 
 Install Nginx Ingress Controller
 ```
-helm install fyzix nginx-stable/nginx-ingress 
+helm install fyzix nginx-stable/nginx-ingress --set controller.service.externalTrafficPolicy=Cluster --set controller.service.loadBalancerIP=10.9.9.50
 ```
 
 Install Cert-manager
@@ -182,3 +182,10 @@ Should give detailed output to understand what is happening with Cert-Manager
 ### Issues
 Reference:
 * https://github.com/jetstack/cert-manager/issues/2712
+* https://github.com/jetstack/cert-manager/issues/2759
+```
+# modify from
+externalTrafficPolicy: Local
+# to
+externalTrafficPolicy: Cluster
+```
