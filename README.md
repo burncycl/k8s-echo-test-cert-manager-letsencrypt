@@ -8,6 +8,13 @@ References:
 - https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nginx-ingress-with-cert-manager-on-digitalocean-kubernetes
 - https://medium.com/@balkaran.brar/configure-letsencrypt-and-cert-manager-with-kubernetes-3156981960d9
 
+### Potential Gotchya
+I run my K8s cluster behind my home router/firewall. This router/firewall performs port-forwarding to 10.9.9.50.
+The cert-manager health check API will not be able to hit the external endpoint to verify connectivity. 
+Thus, you have to perform some DNS trickery. By using my internal DNS server, I pointed 
+echo1.fyzix.net and echo2.fyzix.net to the internal IP address 10.9.9.50 where my Nginx Ingress is hosted.
+This will faclitate health checks passing. See also Troubleshooting section.
+
 
 ### Add Helm repos for Nginx and cert-manager
 ```
@@ -119,6 +126,26 @@ kubectl describe certificate le-prod
 
 Should see Generated new private key and Created new CertificateRequest resource `letsencrypt-env-XXXX`
 
+
+### Troubleshooting
+
+Troubleshooting Cert-Manager
+```
+kc get all -n cert-manager
+```
+
+Get the pod name e.g.
+```
+NAME                                           READY   STATUS    RESTARTS   AGE
+pod/cert-manager-85db5c4c87-dql8j              1/1     Running   0          3h45m
+```
+
+View the logs using the Pod name
+```
+kubectl logs -f cert-manager-85db5c4c87-dql8j -n cert-manager
+```
+
+Should give detailed output to understand what is happening with Cert-Manager
 
 ### Issues
 Reference:

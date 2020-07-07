@@ -10,7 +10,7 @@ spec:
   - hosts:
     - echo1.fyzix.net
     - echo2.fyzix.net
-    secretName: echo-tls
+    secretName: le-staging 
   rules:
   - host: echo1.fyzix.net
     http:
