@@ -9,7 +9,7 @@ References:
 - https://medium.com/@balkaran.brar/configure-letsencrypt-and-cert-manager-with-kubernetes-3156981960d9
 
 ### Potential Gotchya
-I run my K8s cluster behind my home router/firewall. This router/firewall performs port-forwarding to 10.9.9.50.
+I run my K8s cluster behind my home router/firewall. This router/firewall performs port-forwarding to the internal ingress 10.9.9.50.
 The cert-manager health check API will not be able to hit the external endpoint to verify connectivity. 
 Thus, you have to perform some DNS trickery. By using my internal DNS server, I pointed 
 echo1.fyzix.net and echo2.fyzix.net to the internal IP address 10.9.9.50 where my Nginx Ingress is hosted.
@@ -32,32 +32,60 @@ List versions
 helm search repo -l nginx-stable/nginx-ingress 
 helm search repo -l jetstack/cert-manager
 ```
+Can use `--version` argument to specify a specific version of the above software.
 
+
+Install Nginx Ingress Controller
 ```
 helm install fyzix nginx-stable/nginx-ingress 
+```
+
+Install Cert-manager
+
+Will likely need to install CRDs seperate.
+```
 kc apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.2/cert-manager.crds.yaml
+```
+
+Create Namespace and Helm Install cert-manager (Note: This failed on a fresh install).
+```
 kc create ns cert-manager
-helm install cert-manager --namespace cert-manager jetstack/cert-manager # This failed on fresh install
+helm install cert-manager --namespace cert-manager jetstack/cert-manager
+```
+
+This failed with the following error
+```
+Error: rendered manifests contain a resource that already exists. Unable to continue with install: ClusterRole "cert-manager-cainjector" in namespace "" exists and cannot be imported into the current release: invalid ownership metadata; annotation validation error: missing key "meta.helm.sh/release-name": must be set to "cert-manager"; annotation validation error: missing key "meta.helm.sh/release-namespace": must be set to "cert-manager"
+```
+
+Work around for the above failure.
+```
 helm template cert-manager jetstack/cert-manager --namespace cert-manager | kubectl apply -f -
 ```
 
 ### Echo Deployment
 
-I setup port forwardng for both 80 & 443 to my ingress at the External-IP
+I setup port forwardng for both 80 & 443 on my router/firewall to my Internal Ingress Controller at the EXTERNAL-IP.
+
+Fetch EXTERNAL-IP
 ```
-burncycl@tolin:~/xero/euclid/roles/kubectl$ kc get svc
+$ kc get svc
+```
+
+Output
+```
 NAME                 TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
 fyzix-nginx-ingress   LoadBalancer   10.110.29.219    10.9.9.50     80:31963/TCP,443:30209/TCP   17d
 ```
 
-Test plain port 80 echoer
+Fire up the apps and Test plain port 80 echoer
 ```
 kc apply -f app-echo1.yml
 kc apply -f app-echo2.yml
 kc apply -f echo_ingress_plain80.yml
 ```
 
-Should be able to browse to http://echo1.fyzix.net and http://echo2.fyzix.net with both returning: 
+Should be able to browse to http://echo1.fyzix.net and http://echo2.fyzix.net (non-https) with both returning: 
 
 ```
 echoX Fyzix 
@@ -103,7 +131,9 @@ letsencrypt-staging   True    64s
 
 ##### Staging
 
-Now we'll utilize these cert issuers. In the project root directory
+Testing can be facilitated using staging issuer. This keeps us from being rate limited by LetsEncrypt for
+production level certs. 
+
 ```
 kc apply -f staging-echo_ingress.yml
 ```
@@ -115,6 +145,8 @@ kubectl describe certificate le-staging
 ```
 
 ##### Prod
+
+Be careful. LetsEncrypt rate limit applies to this deployment.
 ```
 kc apply -f prod-echo_ingress.yml
 ```
