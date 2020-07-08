@@ -86,7 +86,7 @@ I setup port forwardng for both 80 & 443 on my router/firewall to my Internal In
 
 Fetch EXTERNAL-IP
 ```
-$ kc get svc
+kc get svc
 ```
 
 Output
