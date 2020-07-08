@@ -59,7 +59,7 @@ helm install fyzix nginx-stable/nginx-ingress --set controller.service.externalT
 
 *Install Cert-manager*
 
-Will likely need to install CRDs seperate (be mindful of the version).
+Install CRDs as prerequisite (be mindful of the version).
 ```
 kc apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.2/cert-manager.crds.yaml
 ```
@@ -80,7 +80,7 @@ Work around for the above failure.
 helm template cert-manager jetstack/cert-manager --namespace cert-manager | kubectl apply -f -
 ```
 
-### Echo Deployment
+### Echo Deployment (dummy app)
 
 I setup port forwardng for both 80 & 443 on my router/firewall to my Internal Ingress Controller at the EXTERNAL-IP.
 
@@ -177,6 +177,8 @@ Should see Generated new private key and Created new CertificateRequest resource
 
 
 ### Troubleshooting
+
+Note: When in doubt, use `decribe` on resource.
 
 Troubleshooting Cert-Manager
 ```
