@@ -143,7 +143,6 @@ Output
 NAME                  READY   AGE
 letsencrypt-prod      True    61s
 letsencrypt-staging   True    64s
-
 ```
 
 ##### Staging
@@ -179,6 +178,12 @@ Should see Generated new private key and Created new CertificateRequest resource
 ### Troubleshooting
 
 Note: When in doubt, use `decribe` on resource.
+
+Surface information about certificates
+```
+kc get certificates
+kc describe certificates le-prod
+```
 
 Troubleshooting Cert-Manager
 ```
