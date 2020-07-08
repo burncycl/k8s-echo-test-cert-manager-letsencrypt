@@ -201,13 +201,14 @@ Should give detailed output to understand what is happening with Cert-Manager
 ### Issues
 Reference:
 * https://github.com/jetstack/cert-manager/issues/2712
-
 * https://github.com/jetstack/cert-manager/issues/2759
+
 To Diagnose
 ```
 kc get svc fyzix-nginx-ingress -o yaml
 ```
 
+This can be handled with `--set controller.service.externalTrafficPolicy=Cluster` during Helm Installation of Nginx Ingress Controller. 
 ```
 # Modify from
 externalTrafficPolicy: Local
