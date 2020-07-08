@@ -14,7 +14,7 @@ I run my K8s cluster behind my home router/firewall. This router/firewall perfor
 The cert-manager health check API will not be able to hit the external endpoint to verify connectivity. 
 Thus, you have to perform some DNS trickery or Firewall trickery (using Iptables). 
 
-By using my internal DNS server, I can either point echo1.fyzix.net and echo2.fyzix.net to the internal 
+By using my internal DNS server, I can point echo1.fyzix.net and echo2.fyzix.net to the internal 
 IP address 10.9.9.50 where my Nginx Ingress is hosted. This will faclitate health checks passing. See also Troubleshooting section.
 
 Note: This ended up having issue with helm chart installation of Nginx Ingress Controller, which I believe was due to externalTrafficPolicy setting (local vs cluster - see below Troubleshooting section).
