@@ -4,17 +4,30 @@ Setting up Cert-manager + Letsencrypt with a dummy echo web application.
 
 
 References:
-- https://dev.to/chrisme/setting-up-nginx-ingress-w-automatically-generated-letsencrypt-certificates-on-kubernetes-4f1k
+- https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nginx-ingress-with-cert-manager-on-digitalocean-kubernetes
 - https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nginx-ingress-with-cert-manager-on-digitalocean-kubernetes
 - https://medium.com/@balkaran.brar/configure-letsencrypt-and-cert-manager-with-kubernetes-3156981960d9
+- https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nginx-ingress-on-digitalocean-kubernetes-using-helm
 
 ### Potential Gotchya
 I run my K8s cluster behind my home router/firewall. This router/firewall performs port-forwarding to the internal ingress 10.9.9.50.
 The cert-manager health check API will not be able to hit the external endpoint to verify connectivity. 
-Thus, you have to perform some DNS trickery. By using my internal DNS server, I pointed 
+Thus, you have to perform some DNS trickery or Firewall trickery (using Iptables). By using my internal DNS server, I pointed 
 echo1.fyzix.net and echo2.fyzix.net to the internal IP address 10.9.9.50 where my Nginx Ingress is hosted.
 This will faclitate health checks passing. See also Troubleshooting section.
 
+IPTables rules
+```
+EXTNET=`ifconfig ppp0 | grep "inet " | awk -F'[: ]+' '{ print $3 }'` # Primary IP Address
+# eth1 - Internal Network - LAN 1
+INTNET1="10.9.9.0/24"
+
+# Expose internal network to via the external ip
+INGRESS="10.9.9.50"
+iptables -t nat -A PREROUTING -d ${EXTNET}/32 -p tcp -m multiport --dports 80,443 -j DNAT --to-destination $INGRESS
+iptables -t nat -A POSTROUTING -s $INTNET1 -o ppp0 -j MASQUERADE
+iptables -t nat -A POSTROUTING -s $INTNET1 -d ${INGRESS}/32 -p tcp -m multiport --dports 80,443 -j MASQUERADE
+```
 
 ### Add Helm repos for Nginx and cert-manager
 ```
@@ -34,15 +47,14 @@ helm search repo -l jetstack/cert-manager
 ```
 Can use `--version` argument below to specify a specific version of the above software (if needed).
 
-
-Install Nginx Ingress Controller
+*Install Nginx Ingress Controller*
 ```
 helm install fyzix nginx-stable/nginx-ingress --set controller.service.externalTrafficPolicy=Cluster --set controller.service.loadBalancerIP=10.9.9.50
 ```
 
-Install Cert-manager
+*Install Cert-manager*
 
-Will likely need to install CRDs seperate.
+Will likely need to install CRDs seperate (be mindful of the version).
 ```
 kc apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.2/cert-manager.crds.yaml
 ```
@@ -182,10 +194,16 @@ Should give detailed output to understand what is happening with Cert-Manager
 ### Issues
 Reference:
 * https://github.com/jetstack/cert-manager/issues/2712
+
 * https://github.com/jetstack/cert-manager/issues/2759
+To Diagnose
 ```
-# modify from
+kc get svc fyzix-nginx-ingress -o yaml
+```
+
+```
+# Modify from
 externalTrafficPolicy: Local
-# to
+# To
 externalTrafficPolicy: Cluster
 ```
