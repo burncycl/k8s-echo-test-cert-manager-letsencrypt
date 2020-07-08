@@ -11,10 +11,10 @@ References:
 
 ### Potential Gotchya
 I run my K8s cluster behind my home router/firewall. This router/firewall performs port-forwarding to the internal ingress 10.9.9.50.
-The cert-manager health check API will not be able to hit the external endpoint to verify connectivity. 
-Thus, you have to perform some DNS trickery or Firewall trickery (using Iptables). 
+The cert-manager health check API will not be able to hit the external endpoint to verify connectivity.
+Thus, you have to perform some DNS trickery or Firewall trickery (using Iptables).
 
-By using my internal DNS server, I can point echo1.fyzix.net and echo2.fyzix.net to the internal 
+By using my internal DNS server, I can point echo1.fyzix.net and echo2.fyzix.net to the internal
 IP address 10.9.9.50 where my Nginx Ingress is hosted. This will faclitate health checks passing. See also Troubleshooting section.
 
 Note: This ended up having issue with helm chart installation of Nginx Ingress Controller, which I believe was due to externalTrafficPolicy setting (local vs cluster - see below Troubleshooting section).
@@ -36,18 +36,18 @@ iptables -t nat -A POSTROUTING -s $INTNET1 -d ${INGRESS}/32 -p tcp -m multiport 
 
 ### Add Helm repos for Nginx and cert-manager
 ```
-helm repo add nginx-stable https://helm.nginx.com/stable 
+helm repo add nginx-stable https://helm.nginx.com/stable
 helm repo add jetstack https://charts.jetstack.io
 helm repo update
 ```
-### Helm Install Nginx Ingress & Cert-manager 
-Reference: 
+
+### Helm Install Nginx Ingress & Cert-manager
+Reference:
 * https://hub.helm.sh/charts/jetstack/cert-manager
-* https://github.com/jetstack/cert-manager/issues/2540
 
 List versions
 ```
-helm search repo -l nginx-stable/nginx-ingress 
+helm search repo -l nginx-stable/nginx-ingress
 helm search repo -l jetstack/cert-manager
 ```
 Can use `--version` argument below to specify a specific version of the above software (if needed).
@@ -59,25 +59,10 @@ helm install fyzix nginx-stable/nginx-ingress --set controller.service.externalT
 
 *Install Cert-manager*
 
-Install CRDs as prerequisite (be mindful of the version).
-```
-kc apply --validate=false -f https://github.com/jetstack/cert-manager/releases/download/v0.15.2/cert-manager.crds.yaml
-```
-
-Create Namespace and Helm Install cert-manager (Note: This failed on a fresh install).
+Create Namespace and Helm Install cert-manager with CRDs 
 ```
 kc create ns cert-manager
-helm install cert-manager --namespace cert-manager jetstack/cert-manager
-```
-
-This failed with the following error
-```
-Error: rendered manifests contain a resource that already exists. Unable to continue with install: ClusterRole "cert-manager-cainjector" in namespace "" exists and cannot be imported into the current release: invalid ownership metadata; annotation validation error: missing key "meta.helm.sh/release-name": must be set to "cert-manager"; annotation validation error: missing key "meta.helm.sh/release-namespace": must be set to "cert-manager"
-```
-
-Work around for the above failure.
-```
-helm template cert-manager jetstack/cert-manager --namespace cert-manager | kubectl apply -f -
+helm install cert-manager --namespace cert-manager jetstack/cert-manager --set installCRDs=true
 ```
 
 ### Echo Deployment (dummy app)
@@ -102,10 +87,10 @@ kc apply -f app-echo2.yml
 kc apply -f echo_ingress_plain80.yml
 ```
 
-Should be able to browse to http://echo1.fyzix.net and http://echo2.fyzix.net (non-https) with both returning: 
+Should be able to browse to http://echo1.fyzix.net and http://echo2.fyzix.net (non-https) with both returning:
 
 ```
-echoX Fyzix 
+echoX Fyzix
 ```
 
 #### Test Self-signed certificate issuer
@@ -130,7 +115,7 @@ kc delete -f test-self-signed.yml
 Create the Issuers
 ```
 kc create -f staging_issuer.yml
-kc create -f prod_issuer.yml 
+kc create -f prod_issuer.yml
 ```
 
 Verify
@@ -148,7 +133,7 @@ letsencrypt-staging   True    64s
 ##### Staging
 
 Testing can be facilitated using staging issuer. This keeps us from being rate limited by LetsEncrypt for
-production level certs. 
+production level certs.
 
 ```
 kc apply -f staging-echo_ingress.yml
@@ -205,6 +190,7 @@ Should give detailed output to understand what is happening with Cert-Manager
 
 ### Issues
 Reference:
+* https://github.com/jetstack/cert-manager/issues/863
 * https://github.com/jetstack/cert-manager/issues/2712
 * https://github.com/jetstack/cert-manager/issues/2759
 
@@ -213,10 +199,29 @@ To Diagnose
 kc get svc fyzix-nginx-ingress -o yaml
 ```
 
-This can be handled with `--set controller.service.externalTrafficPolicy=Cluster` during Helm Installation of Nginx Ingress Controller. 
+This can be handled with `--set controller.service.externalTrafficPolicy=Cluster` during Helm Installation of Nginx Ingress Controller.
 ```
 # Modify from
 externalTrafficPolicy: Local
 # To
 externalTrafficPolicy: Cluster
+```
+
+* https://github.com/jetstack/cert-manager/issues/2540
+
+You might get the following error. This is indictive of a previous non-helm installation or the like. To resolve, delete the various CRDs and ClustRoles
+```
+Error: rendered manifests contain a resource that already exists. Unable to continue with install: ClusterRole "cert-manager-cainjector" in namespace "" exists and cannot be imported into the current release: invalid ownership metadata; annotation validation error: missing key "meta.helm.sh/release-name": must be set to "cert-manager"; annotation validation error: missing key "meta.helm.sh/release-namespace": must be set to "cert-manager"
+```
+
+Output the template yaml, and run a delete
+```
+helm template cert-manager jetstack/cert-manager --namespace cert-manager --set installCRDs=true > output.yml
+kc delete -f output.yml
+rm output.yml
+```
+
+An additional solution for the failure
+```
+helm template cert-manager jetstack/cert-manager --namespace cert-manager | kubectl apply -f -
 ```
