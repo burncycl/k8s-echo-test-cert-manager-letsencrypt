@@ -191,15 +191,14 @@ Should give detailed output to understand what is happening with Cert-Manager
 ### Issues
 References:
 * https://github.com/jetstack/cert-manager/issues/863
-* https://github.com/jetstack/cert-manager/issues/2712
 * https://github.com/jetstack/cert-manager/issues/2759
-* https://github.com/jetstack/cert-manager/issues/2980#issuecomment-654911781
+
+Self check always fails because externalTrafficPolicy set to `Local`
 
 To Diagnose
 ```
 kc get svc fyzix-nginx-ingress -o yaml
 ```
-
 This can be handled with `--set controller.service.externalTrafficPolicy=Cluster` during Helm Installation of Nginx Ingress Controller.
 ```
 # Modify from
@@ -208,6 +207,8 @@ externalTrafficPolicy: Local
 externalTrafficPolicy: Cluster
 ```
 
+-----------------------------------------------------------------
+References:
 * https://github.com/jetstack/cert-manager/issues/2540
 
 You might get the following error. This is indictive of a previous non-helm installation or the like. To resolve, delete the various CRDs and ClustRoles
@@ -226,6 +227,10 @@ An additional solution for the failure
 ```
 helm template cert-manager jetstack/cert-manager --namespace cert-manager | kubectl apply -f -
 ```
+
+-----------------------------------------------------------------
+References:
+* https://github.com/jetstack/cert-manager/issues/2712
 
 Problem with http to https force redirect / tls upgrade.
 ```
