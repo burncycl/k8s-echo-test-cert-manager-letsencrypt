@@ -193,6 +193,7 @@ Reference:
 * https://github.com/jetstack/cert-manager/issues/863
 * https://github.com/jetstack/cert-manager/issues/2712
 * https://github.com/jetstack/cert-manager/issues/2759
+* https://github.com/jetstack/cert-manager/issues/2980#issuecomment-654911781
 
 To Diagnose
 ```
@@ -225,3 +226,8 @@ An additional solution for the failure
 ```
 helm template cert-manager jetstack/cert-manager --namespace cert-manager | kubectl apply -f -
 ```
+
+```
+cert-manager/controller/challenges "msg"="propagation check failed" "error"="failed to perform self check GET request remote error: tls: handshake failure" "resource_namespace"="default" "type"="http-01
+```
+This required modificaitons to annotations and path formatting as per: https://github.com/jetstack/cert-manager/issues/2980#issuecomment-654911781

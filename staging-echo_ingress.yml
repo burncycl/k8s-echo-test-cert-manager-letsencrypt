@@ -1,26 +1,32 @@
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1beta1 # for versions before 1.14 use extensions/v1beta1
 kind: Ingress
 metadata:
   name: echo-ingress
   annotations:
     kubernetes.io/ingress.class: "nginx"
-    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    cert-manager.io/cluster-issuer: letsencrypt-staging  # reference to the ClusterIssuer resource
+    cert-manager.io/issue-temporary-certificate: "true" # temporary cert required for nginx to be able to reload
+    acme.cert-manager.io/http01-edit-in-place: "true" # important to merge with existing ingress resource into a single nginx config file
+    #ingress.kubernetes.io/ssl-redirect: "false" # avoid http > https redirect ( acme-challenge was still successful even with the redirect enabled )
 spec:
-  tls:
-  - hosts:
-    - echo1.fyzix.net
-    - echo2.fyzix.net
-    secretName: le-staging 
   rules:
-  - host: echo1.fyzix.net
-    http:
-      paths:
-      - backend:
-          serviceName: echo1
-          servicePort: 80
-  - host: echo2.fyzix.net
-    http:
-      paths:
-      - backend:
-          serviceName: echo2
-          servicePort: 80
+    - host: echo1.fyzix.net 
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: echo1 
+              servicePort: 80
+    - host: echo2.fyzix.net 
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: echo2 
+              servicePort: 80
+              
+  tls: # < placing a host in the TLS config will indicate a certificate should be created
+    - secretName: le-staging # < cert-manager will store the created certificate in this secret.
+      hosts:
+        - echo1.fyzix.net 
+        - echo2.fyzix.net 
