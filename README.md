@@ -189,7 +189,7 @@ kubectl logs -f cert-manager-85db5c4c87-dql8j -n cert-manager
 Should give detailed output to understand what is happening with Cert-Manager
 
 ### Issues
-Reference:
+References:
 * https://github.com/jetstack/cert-manager/issues/863
 * https://github.com/jetstack/cert-manager/issues/2712
 * https://github.com/jetstack/cert-manager/issues/2759
@@ -227,6 +227,7 @@ An additional solution for the failure
 helm template cert-manager jetstack/cert-manager --namespace cert-manager | kubectl apply -f -
 ```
 
+Problem with http to https force redirect / tls upgrade.
 ```
 cert-manager/controller/challenges "msg"="propagation check failed" "error"="failed to perform self check GET request remote error: tls: handshake failure" "resource_namespace"="default" "type"="http-01
 ```
